@@ -167,6 +167,10 @@ bool CBoard::isOpponentPiece(int fromRow, int fromCol, int toRow, int toCol) con
 }
 
 bool CBoard::isValidMove(int currentPlayer, int fromRow, int fromCol, int toRow, int toCol) const {
+    if (board[fromRow][fromCol]->getPlayer() != currentPlayer){
+        std::cout<< "This piece belongs to your opponent\n";
+        return false;
+    }
     // Check if the move is valid based on the piece logic
     if ((board[fromRow][fromCol] != nullptr)&&(board[toRow][toCol] == nullptr)) {
         return board[fromRow][fromCol]->isValidMove(*this, fromRow, fromCol, toRow, toCol);
@@ -175,10 +179,12 @@ bool CBoard::isValidMove(int currentPlayer, int fromRow, int fromCol, int toRow,
 }
 
 bool CBoard::isValidCapture(int currentPlayer, int fromRow, int fromCol, int toRow, int toCol) const {
+    if(isOpponentPiece(fromRow, fromCol, toRow, toCol))
     // Check if the move is valid based on the piece logic
-    if ((board[fromRow][fromCol] != nullptr)&&(board[toRow][toCol]->getPlayer() != currentPlayer)) {
-        return board[fromRow][fromCol]->isValidCapture(*this, fromRow, fromCol, toRow, toCol);
-    }
+        if ((board[fromRow][fromCol] != nullptr)) {
+            return board[fromRow][fromCol]->isValidCapture(*this, fromRow, fromCol, toRow, toCol);
+        }
+    std::cout<< "No pieces to capture\n";
     return false;
 }
 
@@ -272,15 +278,37 @@ bool CBoard::isCheckmate(int currentPlayer) const {
                     // Check if any legal move can get out of check
                     for (int toRow = 0; toRow < 8; ++toRow) {
                         for (int toCol = 0; toCol < 8; ++toCol) {
-                            if (isValidMove(currentPlayer, i, j, toRow, toCol)) {
-                                // Create a deep copy of the board
-                                CBoard tempBoard(*this);
-                                // Try making the move and see if it gets out of check
-                                if(tempBoard.isValidCapture(currentPlayer, i, j, toRow, toCol))
-                                    tempBoard.makeMove(currentPlayer, i, j, toRow, toCol);
-                                if (!tempBoard.isInCheck(currentPlayer)) {
-                                    // The move successfully gets out of check
-                                    return false;
+                            if((i != toRow || j != toCol)) {
+                                displayBoard();
+                                std::cout<< "Checking move from:"<<i<<j<<toRow<<toCol<<"\n";
+                                if (isValidMove(currentPlayer, i, j, toRow, toCol)) {
+                                    // Create a deep copy of the board
+                                    CBoard tempBoard(*this);
+                                    tempBoard.displayBoard();
+                                    // Try making the move and see if it gets out of check
+                                    if(tempBoard.isValidMove(currentPlayer, i, j, toRow, toCol))
+                                        std::cout<< "Making move from:"<<i<<j<<toRow<<toCol<<"\n";
+                                        tempBoard.makeMove(currentPlayer, i, j, toRow, toCol);
+                                    if (!tempBoard.isInCheck(currentPlayer)) {
+                                        // The move successfully gets out of check
+                                        std::cout<< "Got out of check\n";
+                                        return false;
+                                    }
+                                    std::cout<< "Didnt get out of check\n";
+
+                                }
+                                std::cout<< "Checking capture from:"<<i<<j<<toRow<<toCol<<"\n";
+                                if (isValidCapture(currentPlayer, i, j, toRow, toCol)) {
+                                    displayBoard();
+                                    // Create a deep copy of the board
+                                    CBoard tempBoard(*this);
+                                    // Try making the move and see if it gets out of check
+                                    if(tempBoard.isValidCapture(currentPlayer, i, j, toRow, toCol))
+                                        tempBoard.makeCapture(currentPlayer, i, j, toRow, toCol);
+                                    if (!tempBoard.isInCheck(currentPlayer)) {
+                                        // The move successfully gets out of check
+                                        return false;
+                                    }
                                 }
                             }
                         }
